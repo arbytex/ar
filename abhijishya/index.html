@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+        "mindar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+      }
+    }
+    </script>
+    <style>
+      body {
+        margin: 0;
+        font-family: sans-serif;
+      }
+
+      #container {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+      }
+
+      #startButton {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 15px 30px;
+        font-size: 18px;
+        font-weight: bold;
+        border: none;
+        border-radius: 30px;
+        background: linear-gradient(135deg, #00c6ff, #0072ff);
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+        z-index: 10;
+        transition: 0.3s;
+      }
+
+      #startButton:hover {
+        transform: translate(-50%, -50%) scale(1.05);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+      }
+
+      #loadingMessage {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 18px;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 12px 24px;
+        border-radius: 8px;
+        display: none;
+        z-index: 5;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container"></div>
+    <button id="startButton">Start AR Experience</button>
+    <script type="module">
+      import * as THREE from 'three';
+      import { MindARThree } from 'mindar-image-three';
+      import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+      const params = new URLSearchParams(window.location.search);
+      const targetSrc = params.get("target"); // .mind file
+      const videoMapJSON = params.get("videos"); // should be JSON stringified object
+
+      // Example: videos={"0":"video1.mp4", "1":"video2.mp4", "2":"video3.mp4"}
+      const videoMap = JSON.parse(videoMapJSON || "{}");
+
+      const startButton = document.querySelector("#startButton");
+
+      const mindarThree = new MindARThree({
+        container: document.querySelector("#container"),
+        imageTargetSrc: targetSrc,
+        uiScanning: "yes",
+        uiLoading: "yes"
+      });
+
+      const { renderer, scene, camera } = mindarThree;
+
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+      scene.add(ambientLight);
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.4);
+      directionalLight.position.set(0, 5, 5);
+      directionalLight.castShadow = true;
+      scene.add(directionalLight);
+
+      directionalLight.shadow.mapSize.width = 1024;
+      directionalLight.shadow.mapSize.height = 1024;
+      directionalLight.shadow.camera.near = 0.5;
+      directionalLight.shadow.camera.far = 50;
+
+      const anchors = [];
+      const videos = [];
+      const printGroups = [];
+
+      const createPlanes = (video, group) => {
+        const videoWidth = video.videoWidth;
+        const videoHeight = video.videoHeight;
+        const videoAspect = videoWidth / videoHeight;
+
+        let planeWidth, planeHeight;
+        if (videoAspect >= 1) {
+          planeWidth = 1;
+          planeHeight = 1 / videoAspect;
+        } else {
+          planeHeight = 1;
+          planeWidth = videoAspect;
+        }
+
+        while (group.children.length > 0) group.remove(group.children[0]);
+
+        const videoTexture = new THREE.VideoTexture(video);
+        videoTexture.encoding = THREE.sRGBEncoding;
+
+        const videoMaterial = new THREE.MeshStandardMaterial({
+          map: videoTexture,
+          roughness: 0.85,
+          metalness: 0.0,
+          side: THREE.FrontSide,
+          transparent: true,
+          opacity: 0.98
+        });
+
+        const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+        const videoPlane = new THREE.Mesh(geometry, videoMaterial);
+        videoPlane.position.z = 0.001;
+        videoPlane.receiveShadow = true;
+
+        const paperGeometry = new THREE.PlaneGeometry(planeWidth * 1.02, planeHeight * 1.02);
+        const paperMaterial = new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          roughness: 0.9,
+          metalness: 0.0,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.6
+        });
+
+        const paperPlane = new THREE.Mesh(paperGeometry, paperMaterial);
+        paperPlane.position.z = -0.001;
+        paperPlane.receiveShadow = true;
+
+        const edgeGeometry = new THREE.BoxGeometry(planeWidth * 1.04, planeHeight * 1.04, 0.008);
+        const edgeMaterial = new THREE.MeshStandardMaterial({
+          color: 0xeeeeee,
+          roughness: 0.7,
+          metalness: 0.0
+        });
+
+        const edge = new THREE.Mesh(edgeGeometry, edgeMaterial);
+        edge.position.z = -0.004;
+        edge.receiveShadow = true;
+        edge.castShadow = true;
+
+        group.add(edge, paperPlane, videoPlane);
+
+        const scale = 1 / Math.min(planeWidth, planeHeight);
+        group.scale.set(scale, scale, scale);
+      };
+
+      const createAnchorForTarget = (index, videoUrl) => {
+        const anchor = mindarThree.addAnchor(index);
+        const video = document.createElement("video");
+        video.src = videoUrl;
+        video.crossOrigin = "anonymous";
+        video.loop = true;
+        video.playsInline = true;
+        video.muted = false;
+        video.style.display = "none";
+        document.body.appendChild(video);
+
+        const printGroup = new THREE.Group();
+        anchor.group.add(printGroup);
+
+        video.addEventListener("loadedmetadata", () => {
+          createPlanes(video, printGroup);
+        });
+
+        anchor.onTargetFound = () => {
+          const currentScale = printGroup.scale.x;
+          printGroup.scale.set(currentScale * 0.95, currentScale * 0.95, currentScale * 0.95);
+          printGroup.rotation.x = -0.05;
+
+          const targetScale = currentScale;
+          const appearTween = () => {
+            printGroup.scale.x += (targetScale - printGroup.scale.x) * 0.1;
+            printGroup.scale.y += (targetScale - printGroup.scale.y) * 0.1;
+            printGroup.scale.z += (targetScale - printGroup.scale.z) * 0.1;
+            printGroup.rotation.x += (0 - printGroup.rotation.x) * 0.1;
+
+            if (Math.abs(targetScale - printGroup.scale.x) > 0.001) {
+              requestAnimationFrame(appearTween);
+            }
+          };
+
+          appearTween();
+          setTimeout(() => {
+            video.play().catch(err => console.warn("Autoplay blocked"));
+          }, 300);
+        };
+
+        anchor.onTargetLost = () => {
+          video.pause();
+        };
+
+        let phase = 0;
+        const subtleMovement = () => {
+          phase += 0.01;
+          if (anchor.visible) {
+            printGroup.position.y = Math.sin(phase) * 0.003;
+            printGroup.rotation.z = Math.sin(phase * 0.7) * 0.003;
+            printGroup.rotation.x = Math.sin(phase * 0.5) * 0.003;
+          }
+          requestAnimationFrame(subtleMovement);
+        };
+
+        subtleMovement();
+
+        video.load();
+        anchors.push(anchor);
+        videos.push(video);
+        printGroups.push(printGroup);
+      };
+
+      Object.keys(videoMap).forEach(index => {
+        createAnchorForTarget(parseInt(index), videoMap[index]);
+      });
+
+      const start = async () => {
+        startButton.style.display = "none";
+        try {
+          await mindarThree.start();
+          renderer.setAnimationLoop(() => {
+            renderer.render(scene, camera);
+          });
+        } catch (err) {
+          alert("AR startup failed. Check camera access.");
+          console.error(err);
+          startButton.style.display = "block";
+        }
+      };
+
+      startButton.addEventListener("click", start);
+      window.addEventListener("resize", () => {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+
+  </body>
+</html>
