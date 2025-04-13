@@ -2,6 +2,7 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Import map for loading Three.js and MindAR libraries -->
     <script type="importmap">
     {
       "imports": {
@@ -12,11 +13,13 @@
     }
     </script>
     <style>
+      /* Reset default margins and set font */
       body {
         margin: 0;
         font-family: sans-serif;
       }
 
+      /* Container for AR view */
       #container {
         width: 100vw;
         height: 100vh;
@@ -24,6 +27,7 @@
         overflow: hidden;
       }
 
+      /* Styling for the start button */
       #startButton {
         position: absolute;
         top: 50%;
@@ -42,11 +46,13 @@
         transition: 0.3s;
       }
 
+      /* Hover effect for start button */
       #startButton:hover {
         transform: translate(-50%, -50%) scale(1.05);
         box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
       }
 
+      /* Loading message styling */
       #loadingMessage {
         position: absolute;
         top: 50%;
@@ -66,31 +72,30 @@
     <div id="container"></div>
     <button id="startButton">Start AR Experience</button>
     <script type="module">
+      // Import required libraries
       import * as THREE from 'three';
       import { MindARThree } from 'mindar-image-three';
       import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-      //const params = new URLSearchParams(window.location.search);
-      //const targetSrc = params.get("target"); // .mind file
-      //const videoMapJSON = params.get("videos"); // should be JSON stringified object
-      const targetSrc = "abhitarget.mind";
+      // Configuration for AR targets and videos
+      const targetSrc = "abhitarget.mind"; // MindAR target file
+      // Map of video URLs for each target index
       const videoMap = {
-      "0": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fdance.mp4?alt=media&token=f43b07e0-c634-49da-90a3-4000a5a422dd",
-      "1": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fback_kundy.mp4?alt=media&token=2d8a48f9-0c0d-4e05-9bbd-d70ecf652b29",
-      "2": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fxmas.mp4?alt=media&token=a0f9e941-096f-4503-962f-a6a6daef2c29",
-      "3": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Ftummy.mp4?alt=media&token=51721f1e-682c-4daf-8576-3c6c0e7bbf7f",
-      "4": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fhospital.mp4?alt=media&token=378fca53-f76d-4577-9e5b-cb9c626d845a",
-      "5": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fbathing.mp4?alt=media&token=4f3371fa-4554-426c-bc68-c0bf0d27522c",
-      "6": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Farun_tour.mp4?alt=media&token=e286973c-250c-4407-856d-e3006efdc8de",
-      "7": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fsowmy_tour.mp4?alt=media&token=8c1ae25d-a6b0-4925-b8fc-2495b4f03548",
-      "8": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fspeak.mp4?alt=media&token=047cbdf3-f769-45fd-8371-f6437d953d5d"
+        "0": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fdance.mp4?alt=media&token=f43b07e0-c634-49da-90a3-4000a5a422dd",
+        "1": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fback_kundy.mp4?alt=media&token=2d8a48f9-0c0d-4e05-9bbd-d70ecf652b29",
+        "2": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fxmas.mp4?alt=media&token=a0f9e941-096f-4503-962f-a6a6daef2c29",
+        "3": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Ftummy.mp4?alt=media&token=51721f1e-682c-4daf-8576-3c6c0e7bbf7f",
+        "4": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fhospital.mp4?alt=media&token=378fca53-f76d-4577-9e5b-cb9c626d845a",
+        "5": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fbathing.mp4?alt=media&token=4f3371fa-4554-426c-bc68-c0bf0d27522c",
+        "6": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Farun_tour.mp4?alt=media&token=e286973c-250c-4407-856d-e3006efdc8de",
+        "7": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fsowmy_tour.mp4?alt=media&token=8c1ae25d-a6b0-4925-b8fc-2495b4f03548",
+        "8": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fspeak.mp4?alt=media&token=047cbdf3-f769-45fd-8371-f6437d953d5d"
       };
 
-      // Example: videos={"0":"video1.mp4", "1":"video2.mp4", "2":"video3.mp4"}
-     // const videoMap = JSON.parse(videoMapJSON || "{}");
-
+      // Initialize UI elements
       const startButton = document.querySelector("#startButton");
 
+      // Initialize MindAR with configuration
       const mindarThree = new MindARThree({
         container: document.querySelector("#container"),
         imageTargetSrc: targetSrc,
@@ -98,11 +103,14 @@
         uiLoading: "yes"
       });
 
+      // Get Three.js components
       const { renderer, scene, camera } = mindarThree;
 
+      // Configure renderer shadows
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
+      // Add lighting to the scene
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
       scene.add(ambientLight);
 
@@ -111,20 +119,29 @@
       directionalLight.castShadow = true;
       scene.add(directionalLight);
 
+      // Configure shadow properties
       directionalLight.shadow.mapSize.width = 1024;
       directionalLight.shadow.mapSize.height = 1024;
       directionalLight.shadow.camera.near = 0.5;
       directionalLight.shadow.camera.far = 50;
 
+      // Arrays to store AR elements
       const anchors = [];
       const videos = [];
       const printGroups = [];
 
+      /**
+       * Creates video planes for AR display
+       * @param {HTMLVideoElement} video - Video element to display
+       * @param {THREE.Group} group - Three.js group to add planes to
+       */
       const createPlanes = (video, group) => {
+        // Calculate video dimensions and aspect ratio
         const videoWidth = video.videoWidth;
         const videoHeight = video.videoHeight;
         const videoAspect = videoWidth / videoHeight;
 
+        // Determine plane dimensions based on aspect ratio
         let planeWidth, planeHeight;
         if (videoAspect >= 1) {
           planeWidth = 1;
@@ -134,58 +151,72 @@
           planeWidth = videoAspect;
         }
 
+        // Clear existing children
         while (group.children.length > 0) group.remove(group.children[0]);
 
+        // Create video texture
         const videoTexture = new THREE.VideoTexture(video);
         videoTexture.encoding = THREE.sRGBEncoding;
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.wrapS = THREE.ClampToEdgeWrapping;
+        videoTexture.wrapT = THREE.ClampToEdgeWrapping;
 
-        const videoMaterial = new THREE.MeshStandardMaterial({
+        // Create video plane material
+        const videoMaterial = new THREE.MeshBasicMaterial({
           map: videoTexture,
-          roughness: 0.85,
-          metalness: 0.0,
           side: THREE.FrontSide,
           transparent: true,
-          opacity: 0.98
+          opacity: 1.0
         });
 
-        const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
-        const videoPlane = new THREE.Mesh(geometry, videoMaterial);
-        videoPlane.position.z = 0.001;
-        videoPlane.receiveShadow = true;
+        // Create video plane geometry and mesh
+        const videoGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 64, 64);
+        const videoPlane = new THREE.Mesh(videoGeometry, videoMaterial);
+        videoPlane.position.z = 0;
+        group.add(videoPlane);
 
-        const paperGeometry = new THREE.PlaneGeometry(planeWidth * 1.02, planeHeight * 1.02);
-        const paperMaterial = new THREE.MeshStandardMaterial({
+        // Add border around video
+        const borderWidth = 0.005;
+        const borderGeometry = new THREE.PlaneGeometry(
+          planeWidth + borderWidth * 2,
+          planeHeight + borderWidth * 2,
+          1, 1
+        );
+        const borderMaterial = new THREE.MeshBasicMaterial({
           color: 0xffffff,
-          roughness: 0.9,
-          metalness: 0.0,
           side: THREE.DoubleSide,
           transparent: true,
-          opacity: 0.6
+          opacity: 0.9
         });
+        const borderPlane = new THREE.Mesh(borderGeometry, borderMaterial);
+        borderPlane.position.z = -0.001;
+        group.add(borderPlane);
 
-        const paperPlane = new THREE.Mesh(paperGeometry, paperMaterial);
-        paperPlane.position.z = -0.001;
-        paperPlane.receiveShadow = true;
-
-        const edgeGeometry = new THREE.BoxGeometry(planeWidth * 1.04, planeHeight * 1.04, 0.008);
-        const edgeMaterial = new THREE.MeshStandardMaterial({
-          color: 0xeeeeee,
-          roughness: 0.7,
-          metalness: 0.0
+        // Add mask for rounded corners
+        const maskGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 64, 64);
+        const maskMaterial = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.5
         });
+        const maskPlane = new THREE.Mesh(maskGeometry, maskMaterial);
+        maskPlane.position.z = -0.002;
+        group.add(maskPlane);
 
-        const edge = new THREE.Mesh(edgeGeometry, edgeMaterial);
-        edge.position.z = -0.004;
-        edge.receiveShadow = true;
-        edge.castShadow = true;
-
-        group.add(edge, paperPlane, videoPlane);
-
+        // Scale group to fit target image
         const scale = 1 / Math.min(planeWidth, planeHeight);
         group.scale.set(scale, scale, scale);
       };
 
+      /**
+       * Creates an anchor for a specific target with video
+       * @param {number} index - Target index
+       * @param {string} videoUrl - URL of the video to display
+       */
       const createAnchorForTarget = (index, videoUrl) => {
+        // Create anchor and video element
         const anchor = mindarThree.addAnchor(index);
         const video = document.createElement("video");
         video.src = videoUrl;
@@ -196,18 +227,23 @@
         video.style.display = "none";
         document.body.appendChild(video);
 
+        // Create group for video planes
         const printGroup = new THREE.Group();
         anchor.group.add(printGroup);
 
+        // Create planes when video metadata is loaded
         video.addEventListener("loadedmetadata", () => {
           createPlanes(video, printGroup);
         });
 
+        // Handle target found event
         anchor.onTargetFound = () => {
+          // Initial scale and rotation
           const currentScale = printGroup.scale.x;
           printGroup.scale.set(currentScale * 0.95, currentScale * 0.95, currentScale * 0.95);
           printGroup.rotation.x = -0.05;
 
+          // Animate appearance
           const targetScale = currentScale;
           const appearTween = () => {
             printGroup.scale.x += (targetScale - printGroup.scale.x) * 0.1;
@@ -221,42 +257,37 @@
           };
 
           appearTween();
+          // Start video playback
           setTimeout(() => {
             video.play().catch(err => console.warn("Autoplay blocked"));
           }, 300);
         };
 
+        // Handle target lost event
         anchor.onTargetLost = () => {
           video.pause();
         };
 
-        let phase = 0;
-        const subtleMovement = () => {
-          phase += 0.01;
-          if (anchor.visible) {
-            printGroup.position.y = Math.sin(phase) * 0.003;
-            printGroup.rotation.z = Math.sin(phase * 0.7) * 0.003;
-            printGroup.rotation.x = Math.sin(phase * 0.5) * 0.003;
-          }
-          requestAnimationFrame(subtleMovement);
-        };
-
-        subtleMovement();
-
+        // Load video and store references
         video.load();
         anchors.push(anchor);
         videos.push(video);
         printGroups.push(printGroup);
       };
 
+      // Create anchors for all videos
       Object.keys(videoMap).forEach(index => {
         createAnchorForTarget(parseInt(index), videoMap[index]);
       });
 
+      /**
+       * Start AR experience
+       */
       const start = async () => {
         startButton.style.display = "none";
         try {
           await mindarThree.start();
+          // Start render loop
           renderer.setAnimationLoop(() => {
             renderer.render(scene, camera);
           });
@@ -267,11 +298,11 @@
         }
       };
 
+      // Add event listeners
       startButton.addEventListener("click", start);
       window.addEventListener("resize", () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
       });
     </script>
-
   </body>
 </html>
