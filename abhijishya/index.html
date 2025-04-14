@@ -77,11 +77,17 @@
       import { MindARThree } from 'mindar-image-three';
       import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-      // Get configuration from Flutter app or use defaults
-      const config = window.arConfig || {
-        targetSrc: "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fabhitarget.mind?alt=media&token=27c1aa64-67fc-4895-99fa-45767f086884",
-        videoMap: {
-          "0": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fdance.mp4?alt=media&token=f43b07e0-c634-49da-90a3-4000a5a422dd",
+   const urlParams = new URLSearchParams(window.location.search);
+let targetSrc = urlParams.get('targetSrc');
+let videoMapParam = urlParams.get('videoMap');
+
+// Provide default values if parameters are null
+if (!targetSrc) {
+  targetSrc = "targets.mind"; // default target file path
+}
+if (!videoMapParam) {
+  videoMapParam = JSON.stringify({
+    "0": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fdance.mp4?alt=media&token=f43b07e0-c634-49da-90a3-4000a5a422dd",
           "1": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fback_kundy.mp4?alt=media&token=2d8a48f9-0c0d-4e05-9bbd-d70ecf652b29",
           "2": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fxmas.mp4?alt=media&token=a0f9e941-096f-4503-962f-a6a6daef2c29",
           "3": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Ftummy.mp4?alt=media&token=51721f1e-682c-4daf-8576-3c6c0e7bbf7f",
@@ -90,12 +96,11 @@
           "6": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Farun_tour.mp4?alt=media&token=e286973c-250c-4407-856d-e3006efdc8de",
           "7": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fsowmy_tour.mp4?alt=media&token=8c1ae25d-a6b0-4925-b8fc-2495b4f03548",
           "8": "https://firebasestorage.googleapis.com/v0/b/arbytex.firebasestorage.app/o/abhijisya%2Fspeak.mp4?alt=media&token=047cbdf3-f769-45fd-8371-f6437d953d5d"
-        }
-      };
+  });
+}
 
-      // Configuration for AR targets and videos
-      const targetSrc = config.targetSrc;
-      const videoMap = config.videoMap;
+// Parse the video map
+const videoMap = JSON.parse(videoMapParam);
 
       // Initialize UI elements
       const startButton = document.querySelector("#startButton");
