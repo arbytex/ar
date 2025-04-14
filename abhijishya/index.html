@@ -77,7 +77,7 @@
       import { MindARThree } from 'mindar-image-three';
       import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-   const urlParams = new URLSearchParams(window.location.search);
+      const urlParams = new URLSearchParams(window.location.search);
 let targetSrc = urlParams.get('targetSrc');
 let videoMapParam = urlParams.get('videoMap');
 
@@ -101,7 +101,6 @@ if (!videoMapParam) {
 
 // Parse the video map
 const videoMap = JSON.parse(videoMapParam);
-
       // Initialize UI elements
       const startButton = document.querySelector("#startButton");
 
