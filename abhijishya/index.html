@@ -182,7 +182,7 @@ const videoMap = JSON.parse(videoMapParam);
         // Create video plane geometry and mesh
         const videoGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 64, 64);
         const videoPlane = new THREE.Mesh(videoGeometry, videoMaterial);
-        videoPlane.position.z = 0.0001;
+        videoPlane.position.z = 0.001;
         group.add(videoPlane);
 
         // Add border around video
