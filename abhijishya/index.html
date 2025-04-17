@@ -182,7 +182,7 @@ const videoMap = JSON.parse(videoMapParam);
         // Create video plane geometry and mesh
         const videoGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 64, 64);
         const videoPlane = new THREE.Mesh(videoGeometry, videoMaterial);
-        videoPlane.position.z = 0;
+        videoPlane.position.z = 0.0001;
         group.add(videoPlane);
 
         // Add border around video
@@ -199,7 +199,7 @@ const videoMap = JSON.parse(videoMapParam);
           opacity: 0.9
         });
         const borderPlane = new THREE.Mesh(borderGeometry, borderMaterial);
-        borderPlane.position.z = -0.001;
+        borderPlane.position.z = -0.0001;
         group.add(borderPlane);
 
         // Add mask for rounded corners
@@ -211,12 +211,14 @@ const videoMap = JSON.parse(videoMapParam);
           opacity: 0.5
         });
         const maskPlane = new THREE.Mesh(maskGeometry, maskMaterial);
-        maskPlane.position.z = -0.002;
+        maskPlane.position.z = -0.0001;
         group.add(maskPlane);
 
         // Scale group to fit target image
-        const scale = 1 / Math.min(planeWidth, planeHeight);
-        group.scale.set(scale, scale, scale);
+        // const scale = 1 / Math.min(planeWidth, planeHeight);
+        // group.scale.set(scale, scale, scale);
+        const physicalwidth = 1;
+        group.scale.set(physicalwidth, physicalwidth, physicalwidth);
       };
 
       /**
@@ -248,24 +250,24 @@ const videoMap = JSON.parse(videoMapParam);
         // Handle target found event
         anchor.onTargetFound = () => {
           // Initial scale and rotation
-          const currentScale = printGroup.scale.x;
-          printGroup.scale.set(currentScale * 0.95, currentScale * 0.95, currentScale * 0.95);
-          printGroup.rotation.x = -0.05;
+          // const currentScale = printGroup.scale.x;
+          // printGroup.scale.set(currentScale * 0.95, currentScale * 0.95, currentScale * 0.95);
+          // printGroup.rotation.x = -0.05;
 
-          // Animate appearance
-          const targetScale = currentScale;
-          const appearTween = () => {
-            printGroup.scale.x += (targetScale - printGroup.scale.x) * 0.1;
-            printGroup.scale.y += (targetScale - printGroup.scale.y) * 0.1;
-            printGroup.scale.z += (targetScale - printGroup.scale.z) * 0.1;
-            printGroup.rotation.x += (0 - printGroup.rotation.x) * 0.1;
+          // // Animate appearance
+          // const targetScale = currentScale;
+          // const appearTween = () => {
+          //   printGroup.scale.x += (targetScale - printGroup.scale.x) * 0.1;
+          //   printGroup.scale.y += (targetScale - printGroup.scale.y) * 0.1;
+          //   printGroup.scale.z += (targetScale - printGroup.scale.z) * 0.1;
+          //   printGroup.rotation.x += (0 - printGroup.rotation.x) * 0.1;
 
-            if (Math.abs(targetScale - printGroup.scale.x) > 0.001) {
-              requestAnimationFrame(appearTween);
-            }
-          };
+          //   if (Math.abs(targetScale - printGroup.scale.x) > 0.001) {
+          //     requestAnimationFrame(appearTween);
+          //   }
+          // };
 
-          appearTween();
+          // appearTween();
           // Start video playback
           setTimeout(() => {
             video.play().catch(err => console.warn("Autoplay blocked"));
